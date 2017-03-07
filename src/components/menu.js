@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import Collapse, { Panel } from 'rc-collapse';
+import { Accordion, Panel } from 'react-bootstrap';
+import { cloneDeep } from 'lodash';
 
 import { fetchMenu, onFilterChange } from '../actions/index';
 import MenuDishes from './menuDishes';
@@ -10,9 +11,7 @@ class Menu extends Component {
     super(props);
 
     this.handleOnFilterChange = this.handleOnFilterChange.bind(this);
-    this.onChange = this.onChange.bind(this);
-
-    this.state = { filter: '', accordion: false, activeKey: [] };
+    this.state = { filter: '' };
   }
 
   componentWillMount() {
@@ -25,27 +24,21 @@ class Menu extends Component {
     this.props.onFilterChange(filter);
   }
 
-  getItems() {
-    const items = this.props.menu.map(menuCls => {
-      return (
-        <Panel header={`${menuCls.Name}`} key={menuCls.id}>
-          <MenuDishes items={menuCls.Classes[0].Items} />
-        </Panel>
-      );
-    });
-
-    return items;
-  }
-
-  onChange(activeKey) {
-    this.setState({
-      activeKey
-    });
+  renderMenuItems() {
+    return (
+      <Accordion>
+        {this.props.menu.map(item => {
+          return (
+            <Panel header={`${item.Name}`} eventKey={item.id} key={item.id}>
+              <MenuDishes items={item.Classes[0].Items} />
+            </Panel>
+          );
+        })}
+      </Accordion>
+    );
   }
 
   render() {
-    const accordion = this.state.accordion;
-    const activeKey = this.state.activeKey;
     return (
       <div className="menu">
         <div className="form-group has-feedback">
@@ -59,13 +52,7 @@ class Menu extends Component {
           <span className="glyphicon glyphicon-search form-control-feedback" />
         </div>
         <br /><br />
-        {
-          (
-            <Collapse accordion={accordion} onChange={this.onChange} activeKey={activeKey}>
-              {this.getItems()}
-            </Collapse>
-          )
-        }
+        {this.renderMenuItems()}
       </div>
     );
   }
@@ -73,12 +60,21 @@ class Menu extends Component {
 
 function mapStateToProps(state) {
   const { all, filter } = state.menu;
-  const filtered = all.filter(item => {
-    return item.Classes[0].Items.find(fItem => {
-      return fItem.Name.indexOf(filter) !== -1;
+
+  const newAll = [];
+  all.forEach(item => {
+    const innerItems = item.Classes[0].Items;
+    const innerFiltered = innerItems.filter(innerItem => {
+      return innerItem.Name.toLowerCase().indexOf(filter) !== -1;
     });
+
+    if (innerFiltered && innerFiltered.length) {
+      const newItem = cloneDeep(item);
+      newItem.Classes[0].Items = innerFiltered;
+      newAll.push(newItem);
+    }
   });
-  return { menu: filtered };
+  return { menu: newAll };
 }
 
 export default connect(mapStateToProps, { fetchMenu, onFilterChange })(Menu);
