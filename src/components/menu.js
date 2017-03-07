@@ -26,21 +26,23 @@ class Menu extends Component {
 
   renderMenuItems() {
     return (
-      <Accordion>
+      <div className="menu">
         {this.props.menu.map(item => {
           return (
-            <Panel header={`${item.Name}`} eventKey={item.id} key={item.id}>
-              <MenuDishes items={item.Classes[0].Items} />
-            </Panel>
+            <Accordion key={item.id}>
+              <Panel header={`${item.Name}`} eventKey={item.id}>
+                <MenuDishes items={item.Classes[0].Items} />
+              </Panel>
+            </Accordion>
           );
         })}
-      </Accordion>
+      </div>
     );
   }
 
   render() {
     return (
-      <div className="menu">
+      <div>
         <div className="form-group has-feedback">
           <input
             value={this.state.filter}
